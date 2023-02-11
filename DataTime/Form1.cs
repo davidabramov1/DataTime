@@ -15,97 +15,117 @@ namespace DataTime
 {
     public partial class Form1 : Form 
     {
-        // строка подключения к БД
-        string connStr = "server=caseum.ru;port=33333;user=test_user;database=db_test;password=test_pass;";
-        //Переменная соединения
-        MySqlConnection conn;
-        //Логин и пароль к данной форме Вы сможете посмотреть в БД db_test таблице t_user
 
-        //Вычисление хэша строки и возрат его из метода
-        static string sha256(string randomString)
-        {
-            //Тут происходит криптографическая магия. Смысл данного метода заключается в том, что строка залетает в метод
-            var crypt = new System.Security.Cryptography.SHA256Managed();
-            var hash = new System.Text.StringBuilder();
-            byte[] crypto = crypt.ComputeHash(Encoding.UTF8.GetBytes(randomString));
-            foreach (byte theByte in crypto)
-            {
-                hash.Append(theByte.ToString("x2"));
-            }
-            return hash.ToString();
-        }
-
-        //Метод запроса данных пользователя по логину для запоминания их в полях класса
-        public void GetUserInfo(string login_user)
-        {
-            //Объявлем переменную для запроса в БД
-            string selected_id_stud = textBox1.Text;
-            // устанавливаем соединение с БД
-            conn.Open();
-            // запрос
-            string sql = $"SELECT * FROM t_user WHERE loginUser='{login_user}'";
-            // объект для выполнения SQL-запроса
-            MySqlCommand command = new MySqlCommand(sql, conn);
-            // объект для чтения ответа сервера
-            MySqlDataReader reader = command.ExecuteReader();
-            // читаем результат
-            while (reader.Read())
-            {
-                // элементы массива [] - это значения столбцов из запроса SELECT
-                Form1.form_id = reader[0].ToString();
-                Auth.form_fio = reader[1].ToString();
-                Auth.auth_role = Convert.ToInt32(reader[4].ToString());
-            }
-            reader.Close(); // закрываем reader
-            // закрываем соединение с БД
-            conn.Close();
-        }
-    
         public Form1()
         {
             InitializeComponent();
+            select();
+        }
+        string connStr = "server=192.168.25.23;port=33333;user=st_1_20_1;database=is_1_20_st1_KURS;password=56064531;";
+        MySqlConnection conn;
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            conn = new MySqlConnection(connStr);
+            select();
         }
 
+        public void select()
+        {
+            DataSet ds;
+            ds = new DataSet();
+            string connectionString = "server=192.168.25.23;port=33333;user=st_1_20_1;database=is_1_20_st1_KURS;password=56064531";
+            MySqlConnection connection = new MySqlConnection(connectionString);
+
+            MySqlCommand command = new MySqlCommand();
+            string commandString = "SELECT * FROM T_DataTime";
+            command.CommandText = commandString;
+            command.Connection = connection;
+            MySqlDataReader reader;
+            try
+            {
+                command.Connection.Open();
+                reader = command.ExecuteReader();
+                this.dataGridView1.Columns.Add("ID", "Номер");
+                this.dataGridView1.Columns["ID"].Width = 90;
+                this.dataGridView1.Columns.Add("Name", "Название");
+                this.dataGridView1.Columns["Name"].Width = 165;
+                this.dataGridView1.Columns.Add("Price", "Цена");
+                this.dataGridView1.Columns["Price"].Width = 80;
+                this.dataGridView1.Columns.Add("Data", "Срок годности");
+                this.dataGridView1.Columns["Data"].Width = 80;
+                while (reader.Read())
+                {
+                    dataGridView1.Rows.Add(reader["ID"].ToString(), reader["Name"].ToString(), reader["Price"].ToString(), reader["Data"].ToString());
+                }
+                reader.Close();
+            }
+            catch (MySqlException ex)
+            {
+                Console.WriteLine("Error: \r\n{0}", ex.ToString());
+            }
+            finally
+            {
+                command.Connection.Close();
+            }
+        
+        }
         private void button1_Click(object sender, EventArgs e)
         {
-            //Запрос в БД на предмет того, если ли строка с подходящим логином и паролем
-            string sql = "SELECT * FROM t_user WHERE loginUser = @un and  passUser= @up";
-            //Открытие соединения
-            conn.Open();
-            //Объявляем таблицу
-            DataTable table = new DataTable();
-            //Объявляем адаптер
-            MySqlDataAdapter adapter = new MySqlDataAdapter();
-            //Объявляем команду
-            MySqlCommand command = new MySqlCommand(sql, conn);
-            //Определяем параметры
-            command.Parameters.Add("@un", MySqlDbType.VarChar, 25);
-            command.Parameters.Add("@up", MySqlDbType.VarChar, 25);
-            //Присваиваем параметрам значение
-            command.Parameters["@un"].Value = textBox1.Text;
-            command.Parameters["@up"].Value = sha256(textBox1.Text);
-            //Заносим команду в адаптер
-            adapter.SelectCommand = command;
-            //Заполняем таблицу
-            adapter.Fill(table);
-            //Закрываем соединение
-            conn.Close();
-            //Если вернулась больше 0 строк, значит такой пользователь существует
-            if (table.Rows.Count > 0)
+            string sql = "INSERT INTO `T_DataTime`(`ID, `Name`,`Price`, `Data`)";
+            if (textBox3.Text == "")
             {
-                //Присваеваем глобальный признак авторизации
-                Form1.form = true;
-                //Достаем данные пользователя в случае успеха
-                GetUserInfo(textBox1.Text);
-                //Закрываем форму
-                this.Close();
+                MessageBox.Show("Введите номер", "Ошибка");
+                return;
+
+            }
+
+            if (textBox2.Text == "")
+
+                if (textBox1.Text == "")
+            {
+                MessageBox.Show("Введите Имя", "Ошибка");
+                return;
+
+            }
+            if (textBox2.Text == "")
+            {
+                MessageBox.Show("Введите Цену", "Ошибка");
+                return;
+
+            }
+            if (dateTimePicker1.Text == "")
+            {
+                MessageBox.Show("Введите срок годности", "Ошибка");
+                return;
+
+            }
+
+            /*
+            if (isUsersExists())
+            {
+                return;
+            }
+            */
+            //   DataTable table = new DataTable();
+            //  MySqlDataAdapter adapter = new MySqlDataAdapter();
+            MySqlCommand command = new MySqlCommand("INSERT INTO `T_DataTime`(`ID`,`Name`, `Price`,`Data`) VALUES (@ID, @Name, @Price, @Data)", conn);
+
+            conn.Open();
+            command.Parameters.Add("@ID", MySqlDbType.Int32, 25).Value = textBox3.Text;
+            command.Parameters.Add("@Name", MySqlDbType.VarChar, 25).Value = textBox1.Text;
+            command.Parameters.Add("@Price", MySqlDbType.VarChar, 25).Value = textBox2.Text;
+            command.Parameters.Add("@Data", MySqlDbType.VarChar, 25).Value = dateTimePicker1.Text;
+            //     adapter.SelectCommand = command;
+            //  adapter.Fill(table);
+            if (command.ExecuteNonQuery() == 1)
+            {
+                MessageBox.Show("Вы успешно Добавили");
             }
             else
             {
-                //Отобразить сообщение о том, что авторизаия неуспешна
-                MessageBox.Show("Неверные данные авторизации!");
-            }           
-        
+                MessageBox.Show("Произошла ошибка, аккаунт не был создан");
+            }
+            conn.Close();
         }
     }
 }
