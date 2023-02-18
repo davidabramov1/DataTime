@@ -209,46 +209,6 @@ namespace DataTime
             public static string Data = null;
         }
 
-        private void button2_Click(object sender, EventArgs e)// Выполнение поиска продукта
-        {
-            string csa = data1(dateTimePicker2);
-            conn = new MySqlConnection(connStr);
-            //Открываем соединение
-
-            conn.Open();
-            string sql = $"SELECT * FROM T_DataTime WHERE Data='{csa}'";
-            table.Clear();
-            adapter.Fill(table);
-            MySqlCommand command = new MySqlCommand(sql, conn);
-            // объект для чтения ответа сервера
-            MySqlDataReader reader = command.ExecuteReader();
-            int count_rows = dataGridView1.RowCount - 1;
-
-            Regex regex = new Regex($"SELECT * FROM T_DataTime WHERE ID='{csa}'");
-            MatchCollection matches = regex.Matches(csa);
-            for (int i = 0; i < count_rows; i++)
-            {
-                if (matches.Count > 0)
-                {
-                    foreach (Match match in matches)
-                    Auth.ID = reader[0].ToString();
-                    Auth.Name = reader[1].ToString();
-                    Auth.Price = reader[2].ToString();
-                    Auth.Data = reader[3].ToString();
-                }
-                else
-                {
-                    MessageBox.Show("По данному запросу нечего не найдено");
-                }
-            }
-            conn.Close();
-        }
-
-        private void dataGridView1_CellMouseDoubleClick (object sender, DataGridViewCellEventArgs e)
-        {
-            
-        }
-
         private void dataGridView1_CellContentDoubleClick(object sender, DataGridViewCellEventArgs e)// Удаление двойным кликом на область продукта.
         {
             string st1 = dataGridView1.Rows[e.RowIndex].Cells[0].Value.ToString();
@@ -277,7 +237,32 @@ namespace DataTime
                 GetListUsers();
             }
         }
-    
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            dataGridView1.CurrentCell = null;
+            string selected_id = textBox4.Text;
+            int count_rows = dataGridView1.RowCount - 1;
+            Regex regex = new Regex($@"{selected_id}(\w*)");
+            for (int i = 0; i < count_rows; i++)
+            {
+                DataGridViewRow row = dataGridView1.Rows[i];
+                string a = Convert.ToString(row.Cells[1].Value);
+                MatchCollection matches = regex.Matches(a);
+
+                if (matches.Count > 0)
+                // if (regex.IsMatch(row))
+                {
+                    dataGridView1.Rows[i].Visible = true;
+
+                }
+                else
+                {
+                    dataGridView1.Rows[i].Visible = false;
+                }
+                ChangeColorDGV();
+            }
+        }
     }
 
 }
